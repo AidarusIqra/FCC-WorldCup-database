@@ -7,56 +7,54 @@ else
   PSQL="psql --username=freecodecamp --dbname=worldcup -t --no-align -c"
 fi
 
-
 # Do not change code above this line. Use the PSQL variable above to query your database.
 
-cat games.csv | while IFS="," read YEAR ROUND WINNER OPPONENT WINNER_GOALS OPPONENT_GOALS
+echo $($PSQL "TRUNCATE TABLE games, teams")
+
+cat games.csv | while IFS="," read YEAR ROUND WINNER OPPONENT WINNER_G OPPONENT_G
 do
-  if [[ $YEAR != "year" ]]
-  then
-    #get team ID
-    WINNER_ID=$($PSQL "select team_id from teams where name='$WINNER'");
-    #if not found
-    if [[ -z $WINNER_ID ]]
+  TEAMS=$($PSQL "select name from teams where name='$WINNER'")
+  if [[ $WINNER != "winner" ]]
+    then 
+    if [[ -z $TEAMS ]]
     then
-      $($PSQL "insert into teams(name) values ('$WINNER')")
-      # WINNER_ID=$($PSQL "select team_id from teams where team=$WINNER");
-
+    INSERT_TEAM=$($PSQL "insert into teams(name) values('$WINNER')")
+      if [[ $INSERT_TEAM == "INSERT 0 1" ]]
+      then
+       echo Inserted into teams, $WINNER
+      fi
     fi
-
-
-    OPPONENT_ID=$($PSQL "select team_id from teams where name='$OPPONENT'");
-    if [[ -z $OPPONENT_ID ]]
-    then
-      $($PSQL "insert into teams(name) values ('$OPPONENT')")
-     # OPPONENT_ID=$($PSQL "select team_id from teams where team=$OPPONENT");
-    fi
-
-    WINNER_ID=$($PSQL "select team_id from teams where name='$WINNER'");
-    OPPONENT_ID=$($PSQL "select team_id from teams where name='$OPPONENT'");
-    $($PSQL "insert into games(winner_id, opponent_id, winner_goals, opponent_goals, year, round) values ($WINNER_ID, $OPPONENT_ID, $WINNER_GOALS, $OPPONENT_GOALS, $YEAR, '$ROUND')")
-
-
-
-
-
   fi
 
+  TEAMS2=$($PSQL "select name from teams where name='$OPPONENT'")
+  if [[ $OPPONENT != "opponent" ]]
+    then 
+    if [[ -z $TEAMS2 ]]
+      then
+      INSERT_TEAM2=$($PSQL "insert into teams(name) values('$OPPONENT')")
+      if [[ $INSERT_TEAM2 == "INSERT 0 1" ]]
+      then
+       echo Inserted into teams, $OPPONENT
+      fi
+    fi
+  fi
+
+  TEAM_ID_W=$($PSQL "select team_id from teams where name='$WINNER'")
+  TEAM_ID_O=$($PSQL "select team_id from teams where name='$OPPONENT'")
+
+  if [[ -n $TEAM_ID_W  || -n $TEAM_ID_O ]]
+  then
+    if [[ $YEAR != "year" ]]
+    then
+      INSERT_GAMES=$($PSQL "insert into games(year,round,winner_id,opponent_id, winner_goals, opponent_goals) values($YEAR,'$ROUND',$TEAM_ID_W,$TEAM_ID_O,$WINNER_G,$OPPONENT_G)")
+      if [[ $INSERT_GAMES == "INSERT 0 1" ]]
+      then
+       echo Inserted into games, $YEAR
+      fi
+    fi
+  fi
 
 done
-
-cat games.csv | while IFS="," read YEAR ROUND WINNER OPPONENT WINNER_GOALS OPPONENT_GOALS
-do
-
-
-done
-
-
-
-
-
-
-
 
 
 
